@@ -122,6 +122,8 @@ struct VideoConfig final
   bool bDisableCopyToVRAM;
   bool bImmediateXFB;
   bool bCopyEFBScaled;
+  unsigned int iEFBExclude;
+  bool iEFBExcludeEnabled;
   int iSafeTextureCache_ColorSamples;
   float fAspectRatioHackW, fAspectRatioHackH;
   bool bEnablePixelLighting;
