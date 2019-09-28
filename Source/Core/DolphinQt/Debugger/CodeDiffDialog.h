@@ -37,6 +37,8 @@ public:
 private:
   void CreateWidgets();
   void ConnectWidgets();
+  void SaveData();
+  void LoadData();
   void ClearData();
   void ClearBlockCache();
   void OnRecord(bool enabled);
@@ -58,6 +60,8 @@ private:
   QPushButton* m_include_btn;
   QPushButton* m_record_btn;
   QPushButton* m_reset_btn;
+  QPushButton* m_save_btn;
+  QPushButton* m_load_btn;
   CodeWidget* m_code_widget;
 
   std::vector<Diff> m_exclude;

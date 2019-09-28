@@ -77,13 +77,19 @@ void CodeDiffDialog::CreateWidgets()
   m_output_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_output_list->setContextMenuPolicy(Qt::CustomContextMenu);
   m_reset_btn = new QPushButton(tr("Reset All"));
-  m_reset_btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_save_btn = new QPushButton(tr("Save"));
+  m_load_btn = new QPushButton(tr("Load"));
+
+  auto* btns_layout2 = new QGridLayout;
+  btns_layout2->addWidget(m_reset_btn, 1, 0);
+  btns_layout2->addWidget(m_save_btn, 1, 1);
+  btns_layout2->addWidget(m_load_btn, 1, 2);
 
   auto* layout = new QVBoxLayout();
   layout->addLayout(btns_layout);
   layout->addLayout(labels_layout);
   layout->addWidget(m_output_list);
-  layout->addWidget(m_reset_btn);
+  layout->addLayout(btns_layout2);
 
   setLayout(layout);
 }
@@ -98,8 +104,26 @@ void CodeDiffDialog::ConnectWidgets()
                               CodeViewWidget::SetAddressUpdate::WithUpdate);
   });
   connect(m_reset_btn, &QPushButton::pressed, this, &CodeDiffDialog::ClearData);
+  connect(m_save_btn, &QPushButton::pressed, this, &CodeDiffDialog::SaveData);
+  connect(m_load_btn, &QPushButton::pressed, this, &CodeDiffDialog::LoadData);
   connect(m_output_list, &CodeDiffDialog::customContextMenuRequested, this,
           &CodeDiffDialog::OnContextMenu);
+}
+
+void CodeDiffDialog::SaveData()
+{
+//  if (m_current_size_label == 0)
+//    return;
+  m_output_list->item(0);
+}
+
+void CodeDiffDialog::LoadData()
+{
+  new QListWidgetItem(
+      QStringLiteral(
+          "Proof."),
+      m_output_list);
+  //m_output_list->addItem(item);
 }
 
 void CodeDiffDialog::ClearData()
