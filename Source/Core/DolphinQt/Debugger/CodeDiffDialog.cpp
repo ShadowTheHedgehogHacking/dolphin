@@ -7,6 +7,13 @@
 #include <chrono>
 #include <regex>
 #include <vector>
+#include "cereal/types/vector.hpp"
+#include "cereal/types/common.hpp"
+#include "cereal/types/complex.hpp"
+#include "cereal/types/string.hpp"
+#include "cereal/types/memory.hpp"
+#include "cereal/archives/binary.hpp"
+#include <fstream>
 
 #include <QCheckBox>
 #include <QHBoxLayout>
@@ -112,18 +119,35 @@ void CodeDiffDialog::ConnectWidgets()
 
 void CodeDiffDialog::SaveData()
 {
-//  if (m_current_size_label == 0)
-//    return;
-  m_output_list->item(0);
+  std::ofstream os("CodeDiff.lastSavedSession", std::ios::binary);
+  cereal::BinaryOutputArchive archive(os);
+  archive(m_include);
 }
 
 void CodeDiffDialog::LoadData()
 {
-  new QListWidgetItem(
-      QStringLiteral(
-          "Proof."),
-      m_output_list);
-  //m_output_list->addItem(item);
+  std::ifstream is("CodeDiff.lastSavedSession", std::ios::binary);
+  cereal::BinaryInputArchive iarchive(is);
+
+  m_output_list->clear();
+  new QListWidgetItem(tr("Address\tHits\tSymbol"), m_output_list);
+
+  std::vector<Diff> loadVec;
+  iarchive(loadVec);
+
+  for (auto& iter : loadVec)
+  {
+    QString fix_sym = QString::fromStdString(iter.symbol);
+    fix_sym.replace(QStringLiteral("\t"), QStringLiteral("  "));
+
+    QString tmp_out =
+        QString::fromStdString(StringFromFormat("%08x\t%i\t", iter.addr, iter.hits)) + fix_sym;
+
+    auto* item = new QListWidgetItem(tmp_out, m_output_list);
+    item->setData(Qt::UserRole, iter.addr);
+
+    m_output_list->addItem(item);
+  }
 }
 
 void CodeDiffDialog::ClearData()

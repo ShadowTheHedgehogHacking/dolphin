@@ -1,4 +1,1 @@
-﻿  imgui.cpp
-  imgui_draw.cpp
-  imgui_widgets.cpp
-  imgui.vcxproj -> C:\Users\dreamsyntax\Documents\CodingEnvironment\WIPDEBUGGERBUILD\dolphin\Source\..\Build\x64\Release\imgui\bin\imgui.lib
+﻿  imgui.vcxproj -> X:\CodingEnvironment\dolphin-wipdebugger\Source\..\Build\x64\Debug\imgui\bin\imgui.lib

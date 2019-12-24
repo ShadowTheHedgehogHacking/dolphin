@@ -19,6 +19,13 @@ struct Diff
   u32 addr;
   std::string symbol;
   u32 hits;
+
+  template <class Archive>
+  void serialize(Archive& ar)
+  {
+    ar(addr, symbol, hits);
+  }
+
 };
 
 class CodeDiffDialog : public QDialog
