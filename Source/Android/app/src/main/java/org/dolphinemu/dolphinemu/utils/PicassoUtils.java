@@ -2,6 +2,7 @@ package org.dolphinemu.dolphinemu.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.widget.ImageView;
 
 import com.squareup.picasso.Callback;
@@ -16,10 +17,26 @@ public class PicassoUtils
 {
   public static void loadGameBanner(ImageView imageView, GameFile gameFile)
   {
+    Picasso picassoInstance = new Picasso.Builder(imageView.getContext())
+            .addRequestHandler(new GameBannerRequestHandler(gameFile))
+            .build();
+
+    picassoInstance
+            .load(Uri.parse("iso:/" + gameFile.getPath()))
+            .fit()
+            .noFade()
+            .noPlaceholder()
+            .config(Bitmap.Config.RGB_565)
+            .error(R.drawable.no_banner)
+            .into(imageView);
+  }
+
+  public static void loadGameCover(ImageView imageView, GameFile gameFile)
+  {
     File cover = new File(gameFile.getCustomCoverPath());
     if (cover.exists())
     {
-      Picasso.with(imageView.getContext())
+      Picasso.get()
               .load(cover)
               .noFade()
               .noPlaceholder()
@@ -31,7 +48,7 @@ public class PicassoUtils
     }
     else if ((cover = new File(gameFile.getCoverPath())).exists())
     {
-      Picasso.with(imageView.getContext())
+      Picasso.get()
               .load(cover)
               .noFade()
               .noPlaceholder()
@@ -41,13 +58,11 @@ public class PicassoUtils
               .error(R.drawable.no_banner)
               .into(imageView);
     }
-    /**
-     * GameTDB has a pretty close to complete collection for US/EN covers. First pass at getting
-     * the cover will be by the disk's region, second will be the US cover, and third EN.
-     */
+    // GameTDB has a pretty close to complete collection for US/EN covers. First pass at getting
+    // the cover will be by the disk's region, second will be the US cover, and third EN.
     else
     {
-      Picasso.with(imageView.getContext())
+      Picasso.get()
               .load(CoverHelper.buildGameTDBUrl(gameFile, CoverHelper.getRegion(gameFile)))
               .noFade()
               .noPlaceholder()
@@ -65,9 +80,9 @@ public class PicassoUtils
                 }
 
                 @Override
-                public void onError() // Second pass using US region
+                public void onError(Exception ex) // Second pass using US region
                 {
-                  Picasso.with(imageView.getContext())
+                  Picasso.get()
                           .load(CoverHelper.buildGameTDBUrl(gameFile, "US"))
                           .fit()
                           .noFade()
@@ -87,9 +102,9 @@ public class PicassoUtils
                             }
 
                             @Override
-                            public void onError() // Third and last pass using EN region
+                            public void onError(Exception ex) // Third and last pass using EN region
                             {
-                              Picasso.with(imageView.getContext())
+                              Picasso.get()
                                       .load(CoverHelper.buildGameTDBUrl(gameFile, "EN"))
                                       .fit()
                                       .noFade()
@@ -110,7 +125,7 @@ public class PicassoUtils
                                         }
 
                                         @Override
-                                        public void onError()
+                                        public void onError(Exception ex)
                                         {
                                         }
                                       });

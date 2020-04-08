@@ -1,22 +1,19 @@
 package org.dolphinemu.dolphinemu.dialogs;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.DialogFragment;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
 
 import org.dolphinemu.dolphinemu.R;
-import org.dolphinemu.dolphinemu.activities.EmulationActivity;
 import org.dolphinemu.dolphinemu.model.GameFile;
 import org.dolphinemu.dolphinemu.services.GameFileCacheService;
-
-import de.hdodenhof.circleimageview.CircleImageView;
+import org.dolphinemu.dolphinemu.utils.PicassoUtils;
 
 public final class GameDetailsDialog extends DialogFragment
 {
@@ -38,44 +35,35 @@ public final class GameDetailsDialog extends DialogFragment
   {
     GameFile gameFile = GameFileCacheService.addOrGet(getArguments().getString(ARG_GAME_PATH));
 
-    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+    AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
     ViewGroup contents = (ViewGroup) getActivity().getLayoutInflater()
             .inflate(R.layout.dialog_game_details, null);
 
-    final ImageView imageGameScreen = contents.findViewById(R.id.image_game_screen);
-    CircleImageView circleBanner = contents.findViewById(R.id.circle_banner);
+    ImageView banner = contents.findViewById(R.id.banner);
 
     TextView textTitle = contents.findViewById(R.id.text_game_title);
     TextView textDescription = contents.findViewById(R.id.text_description);
 
     TextView textCountry = contents.findViewById(R.id.text_country);
     TextView textCompany = contents.findViewById(R.id.text_company);
-
-    FloatingActionButton buttonLaunch = contents.findViewById(R.id.button_launch);
+    TextView textGameId = contents.findViewById(R.id.text_game_id);
+    TextView textRevision = contents.findViewById(R.id.text_revision);
 
     String country = getResources().getStringArray(R.array.countryNames)[gameFile.getCountry()];
+    String description = gameFile.getDescription();
 
     textTitle.setText(gameFile.getTitle());
     textDescription.setText(gameFile.getDescription());
+    if (description.isEmpty())
+    {
+      textDescription.setVisibility(View.GONE);
+    }
     textCountry.setText(country);
     textCompany.setText(gameFile.getCompany());
+    textGameId.setText(gameFile.getGameId());
+    textRevision.setText(Integer.toString(gameFile.getRevision()));
 
-    buttonLaunch.setOnClickListener(view ->
-    {
-      // Start the emulation activity and send the path of the clicked ROM to it.
-      EmulationActivity.launch(getActivity(), gameFile, -1, imageGameScreen);
-    });
-
-    // Fill in the view contents.
-    Picasso.with(imageGameScreen.getContext())
-            .load(getArguments().getString(gameFile.getScreenshotPath()))
-            .fit()
-            .centerCrop()
-            .noFade()
-            .noPlaceholder()
-            .into(imageGameScreen);
-
-    circleBanner.setImageResource(R.drawable.no_banner);
+    PicassoUtils.loadGameBanner(banner, gameFile);
 
     builder.setView(contents);
     return builder.create();

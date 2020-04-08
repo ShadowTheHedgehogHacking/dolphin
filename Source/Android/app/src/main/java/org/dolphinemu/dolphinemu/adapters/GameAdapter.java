@@ -1,25 +1,23 @@
 package org.dolphinemu.dolphinemu.adapters;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.graphics.Rect;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.widget.RecyclerView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.activities.EmulationActivity;
-import org.dolphinemu.dolphinemu.features.settings.ui.MenuTag;
-import org.dolphinemu.dolphinemu.features.settings.ui.SettingsActivity;
+import org.dolphinemu.dolphinemu.dialogs.GamePropertiesDialog;
 import org.dolphinemu.dolphinemu.model.GameFile;
-import org.dolphinemu.dolphinemu.utils.DirectoryInitialization;
 import org.dolphinemu.dolphinemu.utils.PicassoUtils;
 import org.dolphinemu.dolphinemu.viewholders.GameViewHolder;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,7 +69,7 @@ public final class GameAdapter extends RecyclerView.Adapter<GameViewHolder> impl
   public void onBindViewHolder(GameViewHolder holder, int position)
   {
     GameFile gameFile = mGameFiles.get(position);
-    PicassoUtils.loadGameBanner(holder.imageScreenshot, gameFile);
+    PicassoUtils.loadGameCover(holder.imageScreenshot, gameFile);
 
     holder.textGameTitle.setText(gameFile.getTitle());
     holder.textCompany.setText(gameFile.getCompany());
@@ -121,10 +119,7 @@ public final class GameAdapter extends RecyclerView.Adapter<GameViewHolder> impl
   {
     GameViewHolder holder = (GameViewHolder) view.getTag();
 
-    EmulationActivity.launch((FragmentActivity) view.getContext(),
-            holder.gameFile,
-            holder.getAdapterPosition(),
-            holder.imageScreenshot);
+    EmulationActivity.launch((FragmentActivity) view.getContext(), holder.gameFile);
   }
 
   /**
@@ -150,49 +145,11 @@ public final class GameAdapter extends RecyclerView.Adapter<GameViewHolder> impl
       return true;
     }
 
-    AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-    builder.setTitle("Game Settings")
-            .setItems(R.array.gameSettingsMenus, new DialogInterface.OnClickListener()
-            {
-              public void onClick(DialogInterface dialog, int which)
-              {
-                switch (which)
-                {
-                  case 0:
-                    SettingsActivity.launch(activity, MenuTag.CONFIG, gameId);
-                    break;
-                  case 1:
-                    SettingsActivity.launch(activity, MenuTag.GRAPHICS, gameId);
-                    break;
-                  case 2:
-                    String path =
-                            DirectoryInitialization.getUserDirectory() + "/GameSettings/" +
-                                    gameId + ".ini";
-                    File gameSettingsFile = new File(path);
-                    if (gameSettingsFile.exists())
-                    {
-                      if (gameSettingsFile.delete())
-                      {
-                        Toast.makeText(view.getContext(), "Cleared settings for " + gameId,
-                                Toast.LENGTH_SHORT).show();
-                      }
-                      else
-                      {
-                        Toast.makeText(view.getContext(), "Unable to clear settings for " + gameId,
-                                Toast.LENGTH_SHORT).show();
-                      }
-                    }
-                    else
-                    {
-                      Toast.makeText(view.getContext(), "No game settings to delete",
-                              Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                }
-              }
-            });
-
-    builder.show();
+    GamePropertiesDialog fragment =
+            GamePropertiesDialog
+                    .newInstance(holder.gameFile.getPath(), gameId, holder.gameFile.getPlatform());
+    ((FragmentActivity) view.getContext()).getSupportFragmentManager().beginTransaction()
+            .add(fragment, GamePropertiesDialog.TAG).commit();
     return true;
   }
 
@@ -206,8 +163,9 @@ public final class GameAdapter extends RecyclerView.Adapter<GameViewHolder> impl
     }
 
     @Override
-    public void getItemOffsets(Rect outRect, View view, RecyclerView parent,
-            RecyclerView.State state)
+    public void getItemOffsets(@NonNull Rect outRect, @NonNull View view,
+            @NonNull RecyclerView parent,
+            @NonNull RecyclerView.State state)
     {
       outRect.left = space;
       outRect.right = space;

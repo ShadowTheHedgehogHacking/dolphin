@@ -24,11 +24,11 @@ public:
 
   virtual ~GLContext();
 
-  Mode GetMode() { return m_opengl_mode; }
+  Mode GetMode() const { return m_opengl_mode; }
   bool IsGLES() const { return m_opengl_mode == Mode::OpenGLES; }
 
-  u32 GetBackBufferWidth() { return m_backbuffer_width; }
-  u32 GetBackBufferHeight() { return m_backbuffer_height; }
+  u32 GetBackBufferWidth() const { return m_backbuffer_width; }
+  u32 GetBackBufferHeight() const { return m_backbuffer_height; }
 
   virtual bool IsHeadless() const;
 
@@ -52,7 +52,7 @@ public:
                                            bool prefer_gles = false);
 
 protected:
-  virtual bool Initialize(void* display_handle, void* window_handle, bool stereo, bool core);
+  virtual bool Initialize(const WindowSystemInfo& wsi, bool stereo, bool core);
 
   Mode m_opengl_mode = Mode::Detect;
 

@@ -845,35 +845,35 @@ TranslateResult JitCache_TranslateAddress(u32 address)
   return TranslateResult{true, from_bat, tlb_addr.address};
 }
 
-  // *********************************************************************************
-  // Warning: Test Area
-  //
-  // This code is for TESTING and it works in interpreter mode ONLY. Some games (like
-  // COD iirc) work thanks to this basic TLB emulation.
-  // It is just a small hack and we have never spend enough time to finalize it.
-  // Cheers PearPC!
-  //
-  // *********************************************************************************
+// *********************************************************************************
+// Warning: Test Area
+//
+// This code is for TESTING and it works in interpreter mode ONLY. Some games (like
+// COD iirc) work thanks to this basic TLB emulation.
+// It is just a small hack and we have never spend enough time to finalize it.
+// Cheers PearPC!
+//
+// *********************************************************************************
 
-  /*
-   * PearPC
-   * ppc_mmu.cc
-   *
-   * Copyright (C) 2003, 2004 Sebastian Biallas (sb@biallas.net)
-   *
-   * This program is free software; you can redistribute it and/or modify
-   * it under the terms of the GNU General Public License version 2 as
-   * published by the Free Software Foundation.
-   *
-   * This program is distributed in the hope that it will be useful,
-   * but WITHOUT ANY WARRANTY; without even the implied warranty of
-   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   * GNU General Public License for more details.
-   *
-   * You should have received a copy of the GNU General Public License
-   * along with this program; if not, write to the Free Software
-   * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-   */
+/*
+ * PearPC
+ * ppc_mmu.cc
+ *
+ * Copyright (C) 2003, 2004 Sebastian Biallas (sb@biallas.net)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 
 #define PPC_EXC_DSISR_PAGE (1 << 30)
 #define PPC_EXC_DSISR_PROT (1 << 27)
@@ -1117,13 +1117,12 @@ static TranslateAddressResult TranslatePageAddress(const u32 address, const XChe
 
     for (int i = 0; i < 8; i++, pteg_addr += 8)
     {
-      u32 pteg;
-      std::memcpy(&pteg, &Memory::physical_base[pteg_addr], sizeof(u32));
+      u32 pteg = Common::swap32(Memory::Read_U32(pteg_addr));
 
       if (pte1 == pteg)
       {
         UPTE2 PTE2;
-        PTE2.Hex = Common::swap32(&Memory::physical_base[pteg_addr + 4]);
+        PTE2.Hex = Memory::Read_U32(pteg_addr + 4);
 
         // set the access bits
         switch (flag)
@@ -1145,8 +1144,7 @@ static TranslateAddressResult TranslatePageAddress(const u32 address, const XChe
 
         if (!IsNoExceptionFlag(flag))
         {
-          const u32 swapped_pte2 = Common::swap32(PTE2.Hex);
-          std::memcpy(&Memory::physical_base[pteg_addr + 4], &swapped_pte2, sizeof(u32));
+          Memory::Write_U32(PTE2.Hex, pteg_addr + 4);
         }
 
         // We already updated the TLB entry if this was caused by a C bit.
@@ -1302,4 +1300,14 @@ static TranslateAddressResult TranslateAddress(u32 address)
   return TranslatePageAddress(address, flag);
 }
 
-}  // namespace
+std::optional<u32> GetTranslatedAddress(u32 address)
+{
+  auto result = TranslateAddress<XCheckTLBFlag::NoException>(address);
+  if (!result.Success())
+  {
+    return std::nullopt;
+  }
+  return std::optional<u32>(result.address);
+}
+
+}  // namespace PowerPC

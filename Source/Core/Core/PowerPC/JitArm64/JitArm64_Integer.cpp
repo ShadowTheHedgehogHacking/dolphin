@@ -368,7 +368,11 @@ void JitArm64::cntlzwx(UGeckoInstruction inst)
 
   if (gpr.IsImm(s))
   {
+#ifdef _MSC_VER
+    gpr.SetImmediate(a, _CountLeadingZeros(gpr.GetImm(s)));
+#else
     gpr.SetImmediate(a, __builtin_clz(gpr.GetImm(s)));
+#endif
     if (inst.Rc)
       ComputeRC0(gpr.GetImm(a));
   }
@@ -631,6 +635,9 @@ void JitArm64::srawix(UGeckoInstruction inst)
       ComputeCarry(true);
     else
       ComputeCarry(false);
+
+    if (inst.Rc)
+      ComputeRC0(gpr.GetImm(a));
   }
   else if (amount == 0)
   {
@@ -639,6 +646,9 @@ void JitArm64::srawix(UGeckoInstruction inst)
     ARM64Reg RS = gpr.R(s);
     MOV(RA, RS);
     ComputeCarry(false);
+
+    if (inst.Rc)
+      ComputeRC0(RA);
   }
   else
   {
@@ -925,7 +935,7 @@ void JitArm64::subfex(UGeckoInstruction inst)
 
     // d = ~a + b + carry;
     if (gpr.IsImm(a))
-      MOVI2R(WA, ~gpr.GetImm(a));
+      MOVI2R(WA, u32(~gpr.GetImm(a)));
     else
       MVN(WA, gpr.R(a));
     ADCS(gpr.R(d), WA, gpr.R(b));
@@ -1181,7 +1191,7 @@ void JitArm64::divwx(UGeckoInstruction inst)
     if (inst.Rc)
       ComputeRC0(imm_d);
   }
-  else if (gpr.IsImm(b) && gpr.GetImm(b) != 0 && gpr.GetImm(b) != -1u)
+  else if (gpr.IsImm(b) && gpr.GetImm(b) != 0 && gpr.GetImm(b) != UINT32_C(0xFFFFFFFF))
   {
     ARM64Reg WA = gpr.GetReg();
     MOVI2R(WA, gpr.GetImm(b));

@@ -1,28 +1,23 @@
 package org.dolphinemu.dolphinemu.adapters;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.drawable.Drawable;
-import android.support.v17.leanback.widget.ImageCardView;
-import android.support.v17.leanback.widget.Presenter;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
-import android.view.View;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.leanback.widget.ImageCardView;
+import androidx.leanback.widget.Presenter;
+import androidx.fragment.app.FragmentActivity;
+import androidx.core.content.ContextCompat;
+
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import org.dolphinemu.dolphinemu.R;
-import org.dolphinemu.dolphinemu.features.settings.ui.MenuTag;
-import org.dolphinemu.dolphinemu.features.settings.ui.SettingsActivity;
+import org.dolphinemu.dolphinemu.dialogs.GamePropertiesDialog;
 import org.dolphinemu.dolphinemu.model.GameFile;
-import org.dolphinemu.dolphinemu.utils.DirectoryInitialization;
 import org.dolphinemu.dolphinemu.ui.platform.Platform;
 import org.dolphinemu.dolphinemu.utils.PicassoUtils;
 import org.dolphinemu.dolphinemu.viewholders.TvGameViewHolder;
-
-import java.io.File;
 
 /**
  * The Leanback library / docs call this a Presenter, but it works very
@@ -54,7 +49,7 @@ public final class GameRowPresenter extends Presenter
     GameFile gameFile = (GameFile) item;
 
     holder.imageScreenshot.setImageDrawable(null);
-    PicassoUtils.loadGameBanner(holder.imageScreenshot, gameFile);
+    PicassoUtils.loadGameCover(holder.imageScreenshot, gameFile);
 
     holder.cardParent.setTitleText(gameFile.getTitle());
     holder.cardParent.setContentText(gameFile.getCompany());
@@ -80,72 +75,30 @@ public final class GameRowPresenter extends Presenter
     Context context = holder.cardParent.getContext();
     Drawable background = ContextCompat.getDrawable(context, backgroundId);
     holder.cardParent.setInfoAreaBackground(background);
-    holder.cardParent.setOnLongClickListener(new View.OnLongClickListener()
+    holder.cardParent.setOnLongClickListener((view) ->
     {
-      @Override
-      public boolean onLongClick(View view)
+      FragmentActivity activity = (FragmentActivity) view.getContext();
+      String gameId = gameFile.getGameId();
+
+      if (gameId.isEmpty())
       {
-        FragmentActivity activity = (FragmentActivity) view.getContext();
-        String gameId = gameFile.getGameId();
-
-        if (gameId.isEmpty())
-        {
-          AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-          builder.setTitle("Game Settings");
-          builder.setMessage("Files without game IDs don't support game-specific settings.");
-
-          builder.show();
-          return true;
-        }
-
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle("Game Settings")
-                .setItems(R.array.gameSettingsMenus, new DialogInterface.OnClickListener()
-                {
-                  public void onClick(DialogInterface dialog, int which)
-                  {
-                    switch (which)
-                    {
-                      case 0:
-                        SettingsActivity.launch(activity, MenuTag.CONFIG, gameId);
-                        break;
-                      case 1:
-                        SettingsActivity.launch(activity, MenuTag.GRAPHICS, gameId);
-                        break;
-                      case 2:
-                        String path = DirectoryInitialization.getUserDirectory() +
-                                "/GameSettings/" + gameId + ".ini";
-                        File gameSettingsFile = new File(path);
-                        if (gameSettingsFile.exists())
-                        {
-                          if (gameSettingsFile.delete())
-                          {
-                            Toast.makeText(view.getContext(), "Cleared settings for " + gameId,
-                                    Toast.LENGTH_SHORT).show();
-                          }
-                          else
-                          {
-                            Toast.makeText(view.getContext(),
-                                    "Unable to clear settings for " + gameId, Toast.LENGTH_SHORT)
-                                    .show();
-                          }
-                        }
-                        else
-                        {
-                          Toast.makeText(view.getContext(), "No game settings to delete",
-                                  Toast.LENGTH_SHORT).show();
-                        }
-                        break;
-                    }
-                  }
-                });
+        builder.setTitle("Game Settings");
+        builder.setMessage("Files without game IDs don't support game-specific settings.");
 
         builder.show();
         return true;
       }
+
+      GamePropertiesDialog fragment =
+              GamePropertiesDialog.newInstance(holder.gameFile.getPath(), gameId,
+                      holder.gameFile.getPlatform());
+      ((FragmentActivity) view.getContext()).getSupportFragmentManager().beginTransaction()
+              .add(fragment, GamePropertiesDialog.TAG).commit();
+
+      return true;
     });
   }
-
 
   @Override
   public void onUnbindViewHolder(ViewHolder viewHolder)

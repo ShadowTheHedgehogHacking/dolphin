@@ -15,7 +15,7 @@ namespace ControllerEmu
 {
 class ControllerEmu;
 class Buttons;
-}
+}  // namespace ControllerEmu
 
 enum Hotkey
 {
@@ -29,6 +29,8 @@ enum Hotkey
   HK_FULLSCREEN,
   HK_SCREENSHOT,
   HK_EXIT,
+  HK_ACTIVATE_CHAT,
+  HK_REQUEST_GOLF_CONTROL,
 
   HK_VOLUME_DOWN,
   HK_VOLUME_UP,
@@ -66,6 +68,7 @@ enum Hotkey
   HK_WIIMOTE3_CONNECT,
   HK_WIIMOTE4_CONNECT,
   HK_BALANCEBOARD_CONNECT,
+  HK_TOGGLE_SD_CARD,
   HK_TOGGLE_USB_KEYBOARD,
 
   HK_NEXT_WIIMOTE_PROFILE_1,
@@ -107,11 +110,11 @@ enum Hotkey
   HK_FREELOOK_ZOOM_IN,
   HK_FREELOOK_ZOOM_OUT,
   HK_FREELOOK_RESET,
+  HK_FREELOOK_TOGGLE,
 
   HK_TOGGLE_STEREO_SBS,
   HK_TOGGLE_STEREO_TAB,
   HK_TOGGLE_STEREO_ANAGLYPH,
-  HK_TOGGLE_STEREO_3DVISION,
 
   HK_DECREASE_DEPTH,
   HK_INCREASE_DEPTH,
@@ -235,4 +238,4 @@ void GetStatus();
 bool IsEnabled();
 void Enable(bool enable_toggle);
 bool IsPressed(int Id, bool held);
-}
+}  // namespace HotkeyManagerEmu

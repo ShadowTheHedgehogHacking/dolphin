@@ -82,7 +82,7 @@ int NetSSL::GetSSLFreeID() const
 
 IPCCommandResult NetSSL::IOCtl(const IOCtlRequest& request)
 {
-  request.Log(GetDeviceName(), LogTypes::IOS_SSL, LogTypes::LINFO);
+  request.Log(GetDeviceName(), Common::Log::IOS_SSL, Common::Log::LINFO);
   return GetDefaultReply(IPC_SUCCESS);
 }
 
@@ -118,7 +118,7 @@ static std::vector<u8> ReadCertFile(const std::string& path, const std::array<u8
   }
 
   std::array<u8, 32> hash;
-  mbedtls_sha256(bytes.data(), bytes.size(), hash.data(), 0);
+  mbedtls_sha256_ret(bytes.data(), bytes.size(), hash.data(), 0);
   if (hash != correct_hash)
   {
     ERROR_LOG(IOS_SSL, "Wrong hash for %s", path.c_str());
@@ -142,7 +142,7 @@ IPCCommandResult NetSSL::IOCtlV(const IOCtlVRequest& request)
   u32 BufferOut = 0, BufferOut2 = 0, BufferOut3 = 0;
   u32 BufferOutSize = 0, BufferOutSize2 = 0, BufferOutSize3 = 0;
 
-  if (request.in_vectors.size() > 0)
+  if (!request.in_vectors.empty())
   {
     BufferIn = request.in_vectors.at(0).address;
     BufferInSize = request.in_vectors.at(0).size;
@@ -158,7 +158,7 @@ IPCCommandResult NetSSL::IOCtlV(const IOCtlVRequest& request)
     BufferInSize3 = request.in_vectors.at(2).size;
   }
 
-  if (request.io_vectors.size() > 0)
+  if (!request.io_vectors.empty())
   {
     BufferOut = request.io_vectors.at(0).address;
     BufferOutSize = request.io_vectors.at(0).size;
@@ -565,7 +565,7 @@ IPCCommandResult NetSSL::IOCtlV(const IOCtlVRequest& request)
     break;
   }
   default:
-    request.DumpUnknown(GetDeviceName(), LogTypes::IOS_SSL);
+    request.DumpUnknown(GetDeviceName(), Common::Log::IOS_SSL);
   }
 
   // SSL return codes are written to BufferIn

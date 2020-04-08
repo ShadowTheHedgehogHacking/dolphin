@@ -8,16 +8,24 @@
 #include <QApplication>
 #include <QProgressDialog>
 
+#include <imgui.h>
+
 #include "Common/Common.h"
 
+#include "Core/Config/MainSettings.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
 #include "Core/Debugger/PPCDebugInterface.h"
 #include "Core/Host.h"
+#include "Core/NetPlayProto.h"
 #include "Core/PowerPC/PowerPC.h"
 
 #include "DolphinQt/QtUtils/QueueOnObject.h"
 #include "DolphinQt/Settings.h"
+
+#include "InputCommon/ControllerInterface/ControllerInterface.h"
+
+#include "UICommon/DiscordPresence.h"
 
 #include "VideoCommon/RenderBase.h"
 #include "VideoCommon/VideoConfig.h"
@@ -32,8 +40,16 @@ Host* Host::GetInstance()
 
 void Host::SetRenderHandle(void* handle)
 {
+  if (m_render_handle == handle)
+    return;
+
+  m_render_handle = handle;
   if (g_renderer)
+  {
     g_renderer->ChangeSurface(handle);
+    if (g_controller_interface.IsInit())
+      g_controller_interface.ChangeWindow(handle);
+  }
 }
 
 bool Host::GetRenderFocus()
@@ -46,7 +62,7 @@ void Host::SetRenderFocus(bool focus)
   m_render_focus = focus;
   if (g_renderer && m_render_fullscreen && g_ActiveConfig.ExclusiveFullscreenEnabled())
     Core::RunAsCPUThread([focus] {
-      if (!SConfig::GetInstance().bRenderToMain)
+      if (!Config::Get(Config::MAIN_RENDER_TO_MAIN))
         g_renderer->SetFullscreen(focus);
     });
 }
@@ -137,10 +153,20 @@ void Host_RequestRenderWindowSize(int w, int h)
   emit Host::GetInstance()->RequestRenderSize(w, h);
 }
 
-bool Host_UINeedsControllerState()
+bool Host_UIBlocksControllerState()
 {
-  return Settings::Instance().IsControllerStateNeeded();
+  return ImGui::GetCurrentContext() && ImGui::GetIO().WantCaptureKeyboard;
 }
+
 void Host_RefreshDSPDebuggerWindow()
 {
+}
+
+void Host_TitleChanged()
+{
+#ifdef USE_DISCORD_PRESENCE
+  // TODO: Not sure if the NetPlay check is needed.
+  if (!NetPlay::IsNetPlayRunning())
+    Discord::UpdateDiscordPresence();
+#endif
 }

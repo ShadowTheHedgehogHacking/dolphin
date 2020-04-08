@@ -268,7 +268,7 @@ void WiiSocket::Update(bool read, bool write, bool except)
 
         ReturnValue = WiiSockMan::GetInstance().AddSocket(ret, true);
 
-        ioctl.Log("IOCTL_SO_ACCEPT", LogTypes::IOS_NET);
+        ioctl.Log("IOCTL_SO_ACCEPT", Common::Log::IOS_NET);
         break;
       }
       default:
@@ -292,13 +292,13 @@ void WiiSocket::Update(bool read, bool write, bool except)
       u32 BufferOut = 0, BufferOut2 = 0;
       u32 BufferOutSize = 0, BufferOutSize2 = 0;
 
-      if (ioctlv.in_vectors.size() > 0)
+      if (!ioctlv.in_vectors.empty())
       {
         BufferIn = ioctlv.in_vectors.at(0).address;
         BufferInSize = ioctlv.in_vectors.at(0).size;
       }
 
-      if (ioctlv.io_vectors.size() > 0)
+      if (!ioctlv.io_vectors.empty())
       {
         BufferOut = ioctlv.io_vectors.at(0).address;
         BufferOutSize = ioctlv.io_vectors.at(0).size;

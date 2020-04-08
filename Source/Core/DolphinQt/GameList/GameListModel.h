@@ -55,6 +55,7 @@ public:
     COL_COUNTRY,
     COL_SIZE,
     COL_FILE_NAME,
+    COL_FILE_PATH,
     COL_TAGS,
     NUM_COLS
   };
@@ -62,6 +63,9 @@ public:
   void AddGame(const std::shared_ptr<const UICommon::GameFile>& game);
   void UpdateGame(const std::shared_ptr<const UICommon::GameFile>& game);
   void RemoveGame(const std::string& path);
+
+  std::shared_ptr<const UICommon::GameFile> FindGame(const std::string& path) const;
+  std::shared_ptr<const UICommon::GameFile> FindSecondDisc(const UICommon::GameFile& game) const;
 
   void SetScale(float scale);
   float GetScale() const;
@@ -79,7 +83,7 @@ public:
 
 private:
   // Index in m_games, or -1 if it isn't found
-  int FindGame(const std::string& path) const;
+  int FindGameIndex(const std::string& path) const;
 
   QStringList m_tag_list;
   QMap<QString, QVariant> m_game_tags;

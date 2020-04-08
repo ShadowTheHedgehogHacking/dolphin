@@ -13,6 +13,11 @@ namespace PowerPC
 enum class CPUCore;
 }
 
+namespace AudioCommon
+{
+enum class DPL2Quality;
+}
+
 namespace Config
 {
 // Main.Core
@@ -30,8 +35,9 @@ extern const ConfigInfo<bool> MAIN_SYNC_ON_SKIP_IDLE;
 extern const ConfigInfo<std::string> MAIN_DEFAULT_ISO;
 extern const ConfigInfo<bool> MAIN_ENABLE_CHEATS;
 extern const ConfigInfo<int> MAIN_GC_LANGUAGE;
-extern const ConfigInfo<bool> MAIN_OVERRIDE_GC_LANGUAGE;
+extern const ConfigInfo<bool> MAIN_OVERRIDE_REGION_SETTINGS;
 extern const ConfigInfo<bool> MAIN_DPL2_DECODER;
+extern const ConfigInfo<AudioCommon::DPL2Quality> MAIN_DPL2_QUALITY;
 extern const ConfigInfo<int> MAIN_AUDIO_LATENCY;
 extern const ConfigInfo<bool> MAIN_AUDIO_STRETCH;
 extern const ConfigInfo<int> MAIN_AUDIO_STRETCH_LATENCY;
@@ -41,6 +47,7 @@ extern const ConfigInfo<std::string> MAIN_AGP_CART_A_PATH;
 extern const ConfigInfo<std::string> MAIN_AGP_CART_B_PATH;
 extern const ConfigInfo<std::string> MAIN_GCI_FOLDER_A_PATH_OVERRIDE;
 extern const ConfigInfo<std::string> MAIN_GCI_FOLDER_B_PATH_OVERRIDE;
+extern const ConfigInfo<bool> MAIN_CODE_SYNC_OVERRIDE;
 extern const ConfigInfo<bool> MAIN_GCI_FOLDER_CURRENT_GAME_ONLY;
 extern const ConfigInfo<int> MAIN_SLOT_A;
 extern const ConfigInfo<int> MAIN_SLOT_B;
@@ -75,8 +82,7 @@ extern const ConfigInfo<std::string> MAIN_GPU_DETERMINISM_MODE;
 extern const ConfigInfo<std::string> MAIN_PERF_MAP_DIR;
 extern const ConfigInfo<bool> MAIN_CUSTOM_RTC_ENABLE;
 extern const ConfigInfo<u32> MAIN_CUSTOM_RTC_VALUE;
-extern const ConfigInfo<bool> MAIN_ENABLE_SIGNATURE_CHECKS;
-extern const ConfigInfo<bool> MAIN_REDUCE_POLLING_RATE;
+extern const ConfigInfo<bool> MAIN_AUTO_DISC_CHANGE;
 
 // Main.DSP
 
@@ -88,10 +94,24 @@ extern const ConfigInfo<bool> MAIN_DUMP_UCODE;
 extern const ConfigInfo<std::string> MAIN_AUDIO_BACKEND;
 extern const ConfigInfo<int> MAIN_AUDIO_VOLUME;
 
+// Main.Display
+
+extern const ConfigInfo<std::string> MAIN_FULLSCREEN_DISPLAY_RES;
+extern const ConfigInfo<bool> MAIN_FULLSCREEN;
+extern const ConfigInfo<bool> MAIN_RENDER_TO_MAIN;
+extern const ConfigInfo<int> MAIN_RENDER_WINDOW_XPOS;
+extern const ConfigInfo<int> MAIN_RENDER_WINDOW_YPOS;
+extern const ConfigInfo<int> MAIN_RENDER_WINDOW_WIDTH;
+extern const ConfigInfo<int> MAIN_RENDER_WINDOW_HEIGHT;
+extern const ConfigInfo<bool> MAIN_RENDER_WINDOW_AUTOSIZE;
+extern const ConfigInfo<bool> MAIN_KEEP_WINDOW_ON_TOP;
+extern const ConfigInfo<bool> MAIN_DISABLE_SCREENSAVER;
+
 // Main.General
 
 extern const ConfigInfo<std::string> MAIN_DUMP_PATH;
+extern const ConfigInfo<std::string> MAIN_LOAD_PATH;
+extern const ConfigInfo<std::string> MAIN_RESOURCEPACK_PATH;
 extern const ConfigInfo<std::string> MAIN_FS_PATH;
 extern const ConfigInfo<std::string> MAIN_SD_PATH;
-
 }  // namespace Config

@@ -30,8 +30,8 @@ public final class InputBindingSettingViewHolder extends SettingViewHolder
   @Override
   protected void findViews(View root)
   {
-    mTextSettingName = (TextView) root.findViewById(R.id.text_setting_name);
-    mTextSettingDescription = (TextView) root.findViewById(R.id.text_setting_description);
+    mTextSettingName = root.findViewById(R.id.text_setting_name);
+    mTextSettingDescription = root.findViewById(R.id.text_setting_description);
   }
 
   @Override
@@ -41,8 +41,9 @@ public final class InputBindingSettingViewHolder extends SettingViewHolder
 
     mItem = (InputBindingSetting) item;
 
-    mTextSettingName.setText(item.getNameId());
-    mTextSettingDescription.setText(sharedPreferences.getString(mItem.getKey(), ""));
+    mTextSettingName.setText(mItem.getNameId());
+    mTextSettingDescription
+            .setText(sharedPreferences.getString(mItem.getKey() + mItem.getGameId(), ""));
   }
 
   @Override

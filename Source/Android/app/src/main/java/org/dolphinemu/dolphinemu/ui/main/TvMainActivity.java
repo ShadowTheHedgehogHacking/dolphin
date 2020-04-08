@@ -3,15 +3,17 @@ package org.dolphinemu.dolphinemu.ui.main;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v17.leanback.app.BrowseFragment;
-import android.support.v17.leanback.app.BrowseSupportFragment;
-import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.HeaderItem;
-import android.support.v17.leanback.widget.ListRow;
-import android.support.v17.leanback.widget.ListRowPresenter;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
+
+import androidx.annotation.NonNull;
+import androidx.leanback.app.BrowseSupportFragment;
+import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.HeaderItem;
+import androidx.leanback.widget.ListRow;
+import androidx.leanback.widget.ListRowPresenter;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.core.content.ContextCompat;
+
 import android.widget.Toast;
 
 import org.dolphinemu.dolphinemu.R;
@@ -56,8 +58,6 @@ public final class TvMainActivity extends FragmentActivity implements MainView
     {
       StartupHandler.HandleInit(this);
     }
-    // Setup and/or sync channels
-    TvUtil.scheduleSyncingChannel(getApplicationContext());
   }
 
   @Override
@@ -98,7 +98,7 @@ public final class TvMainActivity extends FragmentActivity implements MainView
             .commit();
 
     // Set display parameters for the BrowseFragment
-    mBrowseFragment.setHeadersState(BrowseFragment.HEADERS_ENABLED);
+    mBrowseFragment.setHeadersState(BrowseSupportFragment.HEADERS_ENABLED);
     mBrowseFragment.setBrandColor(ContextCompat.getColor(this, R.color.dolphin_blue_dark));
     buildRowsAdapter();
 
@@ -116,10 +116,7 @@ public final class TvMainActivity extends FragmentActivity implements MainView
                 TvGameViewHolder holder = (TvGameViewHolder) itemViewHolder;
 
                 // Start the emulation activity and send the path of the clicked ISO to it.
-                EmulationActivity.launch(TvMainActivity.this,
-                        holder.gameFile,
-                        -1,
-                        holder.imageScreenshot);
+                EmulationActivity.launch(TvMainActivity.this, holder.gameFile);
               }
             });
   }
@@ -135,12 +132,6 @@ public final class TvMainActivity extends FragmentActivity implements MainView
   }
 
   @Override
-  public void refreshFragmentScreenshot(int fragmentPosition)
-  {
-    mRowsAdapter.notifyArrayItemRangeChanged(0, mRowsAdapter.size());
-  }
-
-  @Override
   public void launchSettingsActivity(MenuTag menuTag)
   {
     SettingsActivity.launch(this, menuTag, "");
@@ -149,7 +140,14 @@ public final class TvMainActivity extends FragmentActivity implements MainView
   @Override
   public void launchFileListActivity()
   {
-    FileBrowserHelper.openDirectoryPicker(this);
+    FileBrowserHelper.openDirectoryPicker(this, FileBrowserHelper.GAME_EXTENSIONS);
+  }
+
+  @Override
+  public void launchOpenFileActivity()
+  {
+    FileBrowserHelper.openFilePicker(this, MainPresenter.REQUEST_GAME_FILE, false,
+            FileBrowserHelper.GAME_EXTENSIONS);
   }
 
   @Override
@@ -171,24 +169,30 @@ public final class TvMainActivity extends FragmentActivity implements MainView
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent result)
   {
+    super.onActivityResult(requestCode, resultCode, result);
     switch (requestCode)
     {
-      case MainPresenter.REQUEST_ADD_DIRECTORY:
+      case MainPresenter.REQUEST_DIRECTORY:
         // If the user picked a file, as opposed to just backing out.
         if (resultCode == MainActivity.RESULT_OK)
         {
-          mPresenter.onDirectorySelected(FileBrowserHelper.getSelectedDirectory(result));
+          mPresenter.onDirectorySelected(FileBrowserHelper.getSelectedPath(result));
         }
         break;
 
-      case MainPresenter.REQUEST_EMULATE_GAME:
-        mPresenter.refreshFragmentScreenshot(resultCode);
+      case MainPresenter.REQUEST_GAME_FILE:
+        // If the user picked a file, as opposed to just backing out.
+        if (resultCode == MainActivity.RESULT_OK)
+        {
+          EmulationActivity.launchFile(this, FileBrowserHelper.getSelectedFiles(result));
+        }
         break;
     }
   }
 
   @Override
-  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+          @NonNull int[] grantResults)
   {
     switch (requestCode)
     {

@@ -16,16 +16,12 @@
 
 namespace Config
 {
-using Layers = std::map<LayerType, std::unique_ptr<Layer>>;
 using ConfigChangedCallback = std::function<void()>;
 
 // Layer management
-Layers* GetLayers();
-void AddLayer(std::unique_ptr<Layer> layer);
 void AddLayer(std::unique_ptr<ConfigLayerLoader> loader);
-Layer* GetLayer(LayerType layer);
+std::shared_ptr<Layer> GetLayer(LayerType layer);
 void RemoveLayer(LayerType layer);
-bool LayerExists(LayerType layer);
 
 void AddConfigChangedCallback(ConfigChangedCallback func);
 void InvokeConfigChangedCallbacks();
@@ -96,4 +92,15 @@ void SetBaseOrCurrent(const ConfigInfo<T>& info, const std::common_type_t<T>& va
   else
     Set<T>(LayerType::CurrentRun, info, value);
 }
-}
+
+// Used to defer InvokeConfigChangedCallbacks until after the completion of many config changes.
+class ConfigChangeCallbackGuard
+{
+public:
+  ConfigChangeCallbackGuard();
+  ~ConfigChangeCallbackGuard();
+
+  ConfigChangeCallbackGuard(const ConfigChangeCallbackGuard&) = delete;
+  ConfigChangeCallbackGuard& operator=(const ConfigChangeCallbackGuard&) = delete;
+};
+}  // namespace Config

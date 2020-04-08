@@ -67,6 +67,7 @@ extern const ConfigInfo<bool> GFX_WAIT_FOR_SHADERS_BEFORE_STARTING;
 extern const ConfigInfo<ShaderCompilationMode> GFX_SHADER_COMPILATION_MODE;
 extern const ConfigInfo<int> GFX_SHADER_COMPILER_THREADS;
 extern const ConfigInfo<int> GFX_SHADER_PRECOMPILER_THREADS;
+extern const ConfigInfo<bool> GFX_SAVE_TEXTURE_CACHE_TO_STATE;
 
 extern const ConfigInfo<bool> GFX_SW_ZCOMPLOC;
 extern const ConfigInfo<bool> GFX_SW_ZFREEZE;
@@ -98,16 +99,23 @@ extern const ConfigInfo<int> GFX_STEREO_CONVERGENCE;
 extern const ConfigInfo<bool> GFX_STEREO_EFB_MONO_DEPTH;
 extern const ConfigInfo<int> GFX_STEREO_DEPTH_PERCENTAGE;
 
+// Stereoscopy pseudo-limits for consistent behavior between enhancements tab and hotkeys.
+static constexpr int GFX_STEREO_DEPTH_MAXIMUM = 100;
+static constexpr int GFX_STEREO_CONVERGENCE_MAXIMUM = 200;
+
 // Graphics.Hacks
 
 extern const ConfigInfo<bool> GFX_HACK_EFB_ACCESS_ENABLE;
+extern const ConfigInfo<bool> GFX_HACK_EFB_DEFER_INVALIDATION;
+extern const ConfigInfo<int> GFX_HACK_EFB_ACCESS_TILE_SIZE;
 extern const ConfigInfo<bool> GFX_HACK_BBOX_ENABLE;
-extern const ConfigInfo<bool> GFX_HACK_BBOX_PREFER_STENCIL_IMPLEMENTATION;
 extern const ConfigInfo<bool> GFX_HACK_FORCE_PROGRESSIVE;
 extern const ConfigInfo<bool> GFX_HACK_SKIP_EFB_COPY_TO_RAM;
 extern const ConfigInfo<bool> GFX_HACK_SKIP_XFB_COPY_TO_RAM;
 extern const ConfigInfo<bool> GFX_HACK_DISABLE_COPY_TO_VRAM;
+extern const ConfigInfo<bool> GFX_HACK_DEFER_EFB_COPIES;
 extern const ConfigInfo<bool> GFX_HACK_IMMEDIATE_XFB;
+extern const ConfigInfo<bool> GFX_HACK_SKIP_DUPLICATE_XFBS;
 extern const ConfigInfo<bool> GFX_HACK_COPY_EFB_SCALED;
 extern const ConfigInfo<bool> GFX_HACK_EFB_EMULATE_FORMAT_CHANGES;
 extern const ConfigInfo<bool> GFX_HACK_VERTEX_ROUDING;

@@ -30,6 +30,7 @@
 #include "Core/IOS/DI/DI.h"
 #include "Core/IOS/Device.h"
 #include "Core/IOS/DeviceStub.h"
+#include "Core/IOS/DolphinDevice.h"
 #include "Core/IOS/ES/ES.h"
 #include "Core/IOS/FS/FileSystem.h"
 #include "Core/IOS/FS/FileSystemProxy.h"
@@ -57,9 +58,7 @@
 #include "Core/PowerPC/PowerPC.h"
 #include "Core/WiiRoot.h"
 
-namespace IOS
-{
-namespace HLE
+namespace IOS::HLE
 {
 static std::unique_ptr<EmulationKernel> s_ios;
 
@@ -374,6 +373,7 @@ void Kernel::AddCoreDevices()
   std::lock_guard<std::mutex> lock(m_device_map_mutex);
   AddDevice(std::make_unique<Device::FS>(*this, "/dev/fs"));
   AddDevice(std::make_unique<Device::ES>(*this, "/dev/es"));
+  AddDevice(std::make_unique<Device::DolphinDevice>(*this, "/dev/dolphin"));
 }
 
 void Kernel::AddStaticDevices()
@@ -630,7 +630,7 @@ void Kernel::UpdateIPC()
   if (!IsReady())
     return;
 
-  if (m_request_queue.size())
+  if (!m_request_queue.empty())
   {
     ClearX1();
     GenerateAck(m_request_queue.front());
@@ -640,7 +640,7 @@ void Kernel::UpdateIPC()
     return;
   }
 
-  if (m_reply_queue.size())
+  if (!m_reply_queue.empty())
   {
     GenerateReply(m_reply_queue.front());
     DEBUG_LOG(IOS, "<<-- Reply to IPC Request @ 0x%08x", m_reply_queue.front());
@@ -648,7 +648,7 @@ void Kernel::UpdateIPC()
     return;
   }
 
-  if (m_ack_queue.size())
+  if (!m_ack_queue.empty())
   {
     GenerateAck(m_ack_queue.front());
     WARN_LOG(IOS, "<<-- Double-ack to IPC Request @ 0x%08x", m_ack_queue.front());
@@ -782,6 +782,9 @@ void Init()
       device->EventNotify();
   });
 
+  Device::DI::s_finish_executing_di_command =
+      CoreTiming::RegisterEvent("FinishDICommand", Device::DI::FinishDICommandCallback);
+
   // Start with IOS80 to simulate part of the Wii boot process.
   s_ios = std::make_unique<EmulationKernel>(Titles::SYSTEM_MENU_IOS);
   // On a Wii, boot2 launches the system menu IOS, which then launches the system menu
@@ -801,5 +804,4 @@ EmulationKernel* GetIOS()
 {
   return s_ios.get();
 }
-}  // namespace HLE
-}  // namespace IOS
+}  // namespace IOS::HLE

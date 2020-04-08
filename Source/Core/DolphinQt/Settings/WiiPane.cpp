@@ -22,7 +22,6 @@
 #include "Core/Config/SYSCONFSettings.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
-#include "Core/IOS/IOS.h"
 
 #include "DolphinQt/Settings.h"
 #include "DolphinQt/Settings/USBDeviceAddToWhitelistDialog.h"
@@ -49,6 +48,7 @@ WiiPane::WiiPane(QWidget* parent) : QWidget(parent)
   LoadConfig();
   ConnectLayout();
   ValidateSelectionState();
+  OnEmulationStateChanged(Core::GetState() != Core::State::Uninitialized);
 }
 
 void WiiPane::CreateLayout()
@@ -74,14 +74,16 @@ void WiiPane::ConnectLayout()
   connect(m_pal60_mode_checkbox, &QCheckBox::toggled, this, &WiiPane::OnSaveConfig);
   connect(m_sd_card_checkbox, &QCheckBox::toggled, this, &WiiPane::OnSaveConfig);
   connect(m_connect_keyboard_checkbox, &QCheckBox::toggled, this, &WiiPane::OnSaveConfig);
+  connect(&Settings::Instance(), &Settings::SDCardInsertionChanged, m_sd_card_checkbox,
+          &QCheckBox::setChecked);
   connect(&Settings::Instance(), &Settings::USBKeyboardConnectionChanged,
           m_connect_keyboard_checkbox, &QCheckBox::setChecked);
 
   // Whitelisted USB Passthrough Devices
   connect(m_whitelist_usb_list, &QListWidget::itemClicked, this, &WiiPane::ValidateSelectionState);
-  connect(m_whitelist_usb_add_button, &QPushButton::pressed, this,
+  connect(m_whitelist_usb_add_button, &QPushButton::clicked, this,
           &WiiPane::OnUSBWhitelistAddButton);
-  connect(m_whitelist_usb_remove_button, &QPushButton::pressed, this,
+  connect(m_whitelist_usb_remove_button, &QPushButton::clicked, this,
           &WiiPane::OnUSBWhitelistRemoveButton);
 
   // Wii Remote Settings
@@ -91,6 +93,10 @@ void WiiPane::ConnectLayout()
   connect(m_wiimote_ir_sensitivity, &QSlider::valueChanged, this, &WiiPane::OnSaveConfig);
   connect(m_wiimote_speaker_volume, &QSlider::valueChanged, this, &WiiPane::OnSaveConfig);
   connect(m_wiimote_motor, &QCheckBox::toggled, this, &WiiPane::OnSaveConfig);
+
+  // Emulation State
+  connect(&Settings::Instance(), &Settings::EmulationStateChanged,
+          [=](Core::State state) { OnEmulationStateChanged(state != Core::State::Uninitialized); });
 }
 
 void WiiPane::CreateMisc()
@@ -171,8 +177,9 @@ void WiiPane::CreateWiiRemoteSettings()
   // i18n: IR stands for infrared and refers to the pointer functionality of Wii Remotes
   m_wiimote_ir_sensitivity_label = new QLabel(tr("IR Sensitivity:"));
   m_wiimote_ir_sensitivity = new QSlider(Qt::Horizontal);
-  m_wiimote_ir_sensitivity->setMinimum(4);
-  m_wiimote_ir_sensitivity->setMaximum(127);
+  // Wii menu saves values from 1 to 5.
+  m_wiimote_ir_sensitivity->setMinimum(1);
+  m_wiimote_ir_sensitivity->setMaximum(5);
 
   // Speaker Volume Slider
   m_wiimote_speaker_volume_label = new QLabel(tr("Speaker Volume:"));
@@ -205,8 +212,8 @@ void WiiPane::LoadConfig()
 {
   m_screensaver_checkbox->setChecked(Config::Get(Config::SYSCONF_SCREENSAVER));
   m_pal60_mode_checkbox->setChecked(Config::Get(Config::SYSCONF_PAL60));
+  m_sd_card_checkbox->setChecked(Settings::Instance().IsSDCardInserted());
   m_connect_keyboard_checkbox->setChecked(Settings::Instance().IsUSBKeyboardConnected());
-  m_sd_card_checkbox->setChecked(SConfig::GetInstance().m_WiiSDCard);
   m_aspect_ratio_choice->setCurrentIndex(Config::Get(Config::SYSCONF_WIDESCREEN));
   m_system_language_choice->setCurrentIndex(Config::Get(Config::SYSCONF_LANGUAGE));
 
@@ -221,17 +228,12 @@ void WiiPane::LoadConfig()
 
 void WiiPane::OnSaveConfig()
 {
+  Config::ConfigChangeCallbackGuard config_guard;
+
   Config::SetBase(Config::SYSCONF_SCREENSAVER, m_screensaver_checkbox->isChecked());
   Config::SetBase(Config::SYSCONF_PAL60, m_pal60_mode_checkbox->isChecked());
+  Settings::Instance().SetSDCardInserted(m_sd_card_checkbox->isChecked());
   Settings::Instance().SetUSBKeyboardConnected(m_connect_keyboard_checkbox->isChecked());
-
-  if (SConfig::GetInstance().m_WiiSDCard != m_sd_card_checkbox->isChecked())
-  {
-    SConfig::GetInstance().m_WiiSDCard = m_sd_card_checkbox->isChecked();
-    auto* ios = IOS::HLE::GetIOS();
-    if (ios)
-      ios->SDIO_EventNotify();
-  }
 
   Config::SetBase<u32>(Config::SYSCONF_SENSOR_BAR_POSITION,
                        TranslateSensorBarPosition(m_wiimote_ir_sensor_position->currentIndex()));

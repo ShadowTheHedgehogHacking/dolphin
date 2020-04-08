@@ -138,12 +138,19 @@ void Init()
   et_UpdateInterrupts = CoreTiming::RegisterEvent("CPInterrupt", UpdateInterrupts_Wrapper);
 }
 
+u32 GetPhysicalAddressMask()
+{
+  // Physical addresses in CP seem to ignore some of the upper bits (depending on platform)
+  // This can be observed in CP MMIO registers by setting to 0xffffffff and then reading back.
+  return SConfig::GetInstance().bWii ? 0x1fffffff : 0x03ffffff;
+}
+
 void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
 {
   constexpr u16 WMASK_NONE = 0x0000;
   constexpr u16 WMASK_ALL = 0xffff;
   constexpr u16 WMASK_LO_ALIGN_32BIT = 0xffe0;
-  const u16 WMASK_HI_RESTRICT = SConfig::GetInstance().bWii ? 0x1fff : 0x03ff;
+  const u16 WMASK_HI_RESTRICT = GetPhysicalAddressMask() >> 16;
 
   struct
   {
@@ -189,7 +196,7 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
   }
 
   mmio->Register(base | FIFO_BP_LO, MMIO::DirectRead<u16>(MMIO::Utils::LowPart(&fifo.CPBreakpoint)),
-                 MMIO::ComplexWrite<u16>([WMASK_LO_ALIGN_32BIT](u32, u16 val) {
+                 MMIO::ComplexWrite<u16>([](u32, u16 val) {
                    WriteLow(fifo.CPBreakpoint, val & WMASK_LO_ALIGN_32BIT);
                  }));
   mmio->Register(base | FIFO_BP_HI,
@@ -276,15 +283,6 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
                  MMIO::ComplexWrite<u16>([WMASK_HI_RESTRICT](u32, u16 val) {
                    WriteHigh(fifo.CPReadWriteDistance, val & WMASK_HI_RESTRICT);
                    Fifo::SyncGPU(Fifo::SyncGPUReason::Other);
-                   if (fifo.CPReadWriteDistance == 0)
-                   {
-                     GPFifo::ResetGatherPipe();
-                     Fifo::ResetVideoBuffer();
-                   }
-                   else
-                   {
-                     Fifo::ResetVideoBuffer();
-                   }
                    Fifo::RunGpu();
                  }));
   mmio->Register(

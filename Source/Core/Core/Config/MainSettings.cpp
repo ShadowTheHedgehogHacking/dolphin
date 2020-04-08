@@ -4,9 +4,10 @@
 
 #include "Core/Config/MainSettings.h"
 
+#include <fmt/format.h>
+
 #include "AudioCommon/AudioCommon.h"
 #include "Common/Config/Config.h"
-#include "Common/StringUtil.h"
 #include "Core/HW/EXI/EXI_Device.h"
 #include "Core/HW/SI/SI_Device.h"
 #include "Core/PowerPC/PowerPC.h"
@@ -28,8 +29,11 @@ const ConfigInfo<bool> MAIN_SYNC_ON_SKIP_IDLE{{System::Main, "Core", "SyncOnSkip
 const ConfigInfo<std::string> MAIN_DEFAULT_ISO{{System::Main, "Core", "DefaultISO"}, ""};
 const ConfigInfo<bool> MAIN_ENABLE_CHEATS{{System::Main, "Core", "EnableCheats"}, false};
 const ConfigInfo<int> MAIN_GC_LANGUAGE{{System::Main, "Core", "SelectedLanguage"}, 0};
-const ConfigInfo<bool> MAIN_OVERRIDE_GC_LANGUAGE{{System::Main, "Core", "OverrideGCLang"}, false};
+const ConfigInfo<bool> MAIN_OVERRIDE_REGION_SETTINGS{
+    {System::Main, "Core", "OverrideRegionSettings"}, false};
 const ConfigInfo<bool> MAIN_DPL2_DECODER{{System::Main, "Core", "DPL2Decoder"}, false};
+const ConfigInfo<AudioCommon::DPL2Quality> MAIN_DPL2_QUALITY{{System::Main, "Core", "DPL2Quality"},
+                                                             AudioCommon::GetDefaultDPL2Quality()};
 const ConfigInfo<int> MAIN_AUDIO_LATENCY{{System::Main, "Core", "AudioLatency"}, 20};
 const ConfigInfo<bool> MAIN_AUDIO_STRETCH{{System::Main, "Core", "AudioStretch"}, false};
 const ConfigInfo<int> MAIN_AUDIO_STRETCH_LATENCY{{System::Main, "Core", "AudioStretchMaxLatency"},
@@ -44,6 +48,7 @@ const ConfigInfo<std::string> MAIN_GCI_FOLDER_B_PATH_OVERRIDE{
     {System::Main, "Core", "GCIFolderBPathOverride"}, ""};
 const ConfigInfo<bool> MAIN_GCI_FOLDER_CURRENT_GAME_ONLY{
     {System::Main, "Core", "GCIFolderCurrentGameOnly"}, false};
+const ConfigInfo<bool> MAIN_CODE_SYNC_OVERRIDE{{System::Main, "Core", "CheatSyncOverride"}, false};
 const ConfigInfo<int> MAIN_SLOT_A{{System::Main, "Core", "SlotA"},
                                   ExpansionInterface::EXIDEVICE_MEMORYCARDFOLDER};
 const ConfigInfo<int> MAIN_SLOT_B{{System::Main, "Core", "SlotB"},
@@ -54,19 +59,19 @@ const ConfigInfo<std::string> MAIN_BBA_MAC{{System::Main, "Core", "BBA_MAC"}, ""
 
 ConfigInfo<u32> GetInfoForSIDevice(u32 channel)
 {
-  return {{System::Main, "Core", StringFromFormat("SIDevice%u", channel)},
+  return {{System::Main, "Core", fmt::format("SIDevice{}", channel)},
           static_cast<u32>(channel == 0 ? SerialInterface::SIDEVICE_GC_CONTROLLER :
                                           SerialInterface::SIDEVICE_NONE)};
 }
 
 ConfigInfo<bool> GetInfoForAdapterRumble(u32 channel)
 {
-  return {{System::Main, "Core", StringFromFormat("AdapterRumble%u", channel)}, true};
+  return {{System::Main, "Core", fmt::format("AdapterRumble{}", channel)}, true};
 }
 
 ConfigInfo<bool> GetInfoForSimulateKonga(u32 channel)
 {
-  return {{System::Main, "Core", StringFromFormat("SimulateKonga%u", channel)}, false};
+  return {{System::Main, "Core", fmt::format("SimulateKonga{}", channel)}, false};
 }
 
 const ConfigInfo<bool> MAIN_WII_SD_CARD{{System::Main, "Core", "WiiSDCard"}, false};
@@ -100,9 +105,24 @@ const ConfigInfo<std::string> MAIN_PERF_MAP_DIR{{System::Main, "Core", "PerfMapD
 const ConfigInfo<bool> MAIN_CUSTOM_RTC_ENABLE{{System::Main, "Core", "EnableCustomRTC"}, false};
 // Default to seconds between 1.1.1970 and 1.1.2000
 const ConfigInfo<u32> MAIN_CUSTOM_RTC_VALUE{{System::Main, "Core", "CustomRTCValue"}, 946684800};
-const ConfigInfo<bool> MAIN_ENABLE_SIGNATURE_CHECKS{{System::Main, "Core", "EnableSignatureChecks"},
-                                                    true};
-const ConfigInfo<bool> MAIN_REDUCE_POLLING_RATE{{System::Main, "Core", "ReducePollingRate"}, false};
+const ConfigInfo<bool> MAIN_AUTO_DISC_CHANGE{{System::Main, "Core", "AutoDiscChange"}, false};
+
+// Main.Display
+
+const ConfigInfo<std::string> MAIN_FULLSCREEN_DISPLAY_RES{
+    {System::Main, "Display", "FullscreenDisplayRes"}, "Auto"};
+const ConfigInfo<bool> MAIN_FULLSCREEN{{System::Main, "Display", "Fullscreen"}, false};
+const ConfigInfo<bool> MAIN_RENDER_TO_MAIN{{System::Main, "Display", "RenderToMain"}, false};
+const ConfigInfo<int> MAIN_RENDER_WINDOW_XPOS{{System::Main, "Display", "RenderWindowXPos"}, -1};
+const ConfigInfo<int> MAIN_RENDER_WINDOW_YPOS{{System::Main, "Display", "RenderWindowYPos"}, -1};
+const ConfigInfo<int> MAIN_RENDER_WINDOW_WIDTH{{System::Main, "Display", "RenderWindowWidth"}, 640};
+const ConfigInfo<int> MAIN_RENDER_WINDOW_HEIGHT{{System::Main, "Display", "RenderWindowHeight"},
+                                                480};
+const ConfigInfo<bool> MAIN_RENDER_WINDOW_AUTOSIZE{
+    {System::Main, "Display", "RenderWindowAutoSize"}, false};
+const ConfigInfo<bool> MAIN_KEEP_WINDOW_ON_TOP{{System::Main, "Display", "KeepWindowOnTop"}, false};
+const ConfigInfo<bool> MAIN_DISABLE_SCREENSAVER{{System::Main, "Display", "DisableScreenSaver"},
+                                                false};
 
 // Main.DSP
 
@@ -118,7 +138,9 @@ const ConfigInfo<int> MAIN_AUDIO_VOLUME{{System::Main, "DSP", "Volume"}, 100};
 // Main.General
 
 const ConfigInfo<std::string> MAIN_DUMP_PATH{{System::Main, "General", "DumpPath"}, ""};
+const ConfigInfo<std::string> MAIN_LOAD_PATH{{System::Main, "General", "LoadPath"}, ""};
+const ConfigInfo<std::string> MAIN_RESOURCEPACK_PATH{{System::Main, "General", "ResourcePackPath"},
+                                                     ""};
 const ConfigInfo<std::string> MAIN_FS_PATH{{System::Main, "General", "NANDRootPath"}, ""};
 const ConfigInfo<std::string> MAIN_SD_PATH{{System::Main, "General", "WiiSDCardPath"}, ""};
-
 }  // namespace Config

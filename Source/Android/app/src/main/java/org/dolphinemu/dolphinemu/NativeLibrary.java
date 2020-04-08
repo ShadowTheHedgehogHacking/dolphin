@@ -6,16 +6,13 @@
 
 package org.dolphinemu.dolphinemu;
 
-import android.app.AlertDialog;
-import android.content.Context;
-import android.os.Build;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
-import android.preference.PreferenceManager;
 import android.view.Surface;
+
+import androidx.appcompat.app.AlertDialog;
 
 import org.dolphinemu.dolphinemu.activities.EmulationActivity;
 import org.dolphinemu.dolphinemu.utils.Log;
+import org.dolphinemu.dolphinemu.utils.Rumble;
 
 import java.lang.ref.WeakReference;
 
@@ -25,7 +22,16 @@ import java.lang.ref.WeakReference;
  */
 public final class NativeLibrary
 {
-  public static WeakReference<EmulationActivity> sEmulationActivity = new WeakReference<>(null);
+  private static WeakReference<EmulationActivity> sEmulationActivity = new WeakReference<>(null);
+
+  /**
+   * Returns the current instance of EmulationActivity.
+   * There should only ever be one EmulationActivity instantiated.
+   */
+  public static EmulationActivity getEmulationActivity()
+  {
+    return sEmulationActivity.get();
+  }
 
   /**
    * Button type for use in onTouchEvent
@@ -190,6 +196,18 @@ public final class NativeLibrary
     public static final int TURNTABLE_CROSSFADE = 622;
     public static final int TURNTABLE_CROSSFADE_LEFT = 623;
     public static final int TURNTABLE_CROSSFADE_RIGHT = 624;
+    public static final int WIIMOTE_ACCEL_LEFT = 625;
+    public static final int WIIMOTE_ACCEL_RIGHT = 626;
+    public static final int WIIMOTE_ACCEL_FORWARD = 627;
+    public static final int WIIMOTE_ACCEL_BACKWARD = 628;
+    public static final int WIIMOTE_ACCEL_UP = 629;
+    public static final int WIIMOTE_ACCEL_DOWN = 630;
+    public static final int WIIMOTE_GYRO_PITCH_UP = 631;
+    public static final int WIIMOTE_GYRO_PITCH_DOWN = 632;
+    public static final int WIIMOTE_GYRO_ROLL_LEFT = 633;
+    public static final int WIIMOTE_GYRO_ROLL_RIGHT = 634;
+    public static final int WIIMOTE_GYRO_YAW_LEFT = 635;
+    public static final int WIIMOTE_GYRO_YAW_RIGHT = 636;
   }
 
   /**
@@ -245,27 +263,24 @@ public final class NativeLibrary
       return;
     }
 
-    if (PreferenceManager.getDefaultSharedPreferences(emulationActivity)
-            .getBoolean("phoneRumble", true))
-    {
-      Vibrator vibrator = (Vibrator) emulationActivity.getSystemService(Context.VIBRATOR_SERVICE);
-      if (vibrator != null && vibrator.hasVibrator())
-      {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-        {
-          vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
-        }
-        else
-        {
-          vibrator.vibrate(100);
-        }
-      }
-    }
+    Rumble.checkRumble(padID, state);
   }
+
+  public static native void SetMotionSensorsEnabled(boolean accelerometerEnabled,
+          boolean gyroscopeEnabled);
+
+  public static native void NewGameIniFile();
+
+  public static native void LoadGameIniFile(String gameId);
+
+  public static native void SaveGameIniFile(String gameId);
 
   public static native String GetUserSetting(String gameID, String Section, String Key);
 
   public static native void SetUserSetting(String gameID, String Section, String Key, String Value);
+
+  public static native void SetProfileSetting(String profile, String Section, String Key,
+          String Value);
 
   public static native void InitGameIni(String gameID);
 
@@ -350,15 +365,34 @@ public final class NativeLibrary
 
   public static native int DefaultCPUCore();
 
+  public static native void ReloadConfig();
+
+  /**
+   * Initializes the native parts of the app.
+   *
+   * Should be called at app start before running any other native code
+   * (other than the native methods in DirectoryInitialization).
+   */
+  public static native void Initialize();
+
+  /**
+   * Tells analytics that Dolphin has been started.
+   *
+   * Since users typically don't explicitly close Android apps, it's appropriate to
+   * call this not only when the app starts but also when the user returns to the app
+   * after not using it for a significant amount of time.
+   */
+  public static native void ReportStartToAnalytics();
+
   /**
    * Begins emulation.
    */
-  public static native void Run(String path, boolean firstOpen);
+  public static native void Run(String[] path);
 
   /**
    * Begins emulation from the specified savestate.
    */
-  public static native void Run(String path, String savestatePath, boolean deleteSavestate);
+  public static native void Run(String[] path, String savestatePath, boolean deleteSavestate);
 
   public static native void ChangeDisc(String path);
 
@@ -381,6 +415,8 @@ public final class NativeLibrary
    * Stops emulation.
    */
   public static native void StopEmulation();
+
+  public static native void WaitUntilDoneBooting();
 
   /**
    * Returns true if emulation is running (or is paused).
@@ -408,6 +444,8 @@ public final class NativeLibrary
    * Provides a way to refresh the connections on Wiimotes
    */
   public static native void RefreshWiimotes();
+
+  public static native void ReloadWiimoteConfig();
 
   private static boolean alertResult = false;
 
@@ -502,4 +540,19 @@ public final class NativeLibrary
 
     sEmulationActivity.clear();
   }
+
+  public static void updateTouchPointer()
+  {
+    final EmulationActivity emulationActivity = sEmulationActivity.get();
+    if (emulationActivity == null)
+    {
+      Log.warning("[NativeLibrary] EmulationActivity is null.");
+    }
+    else
+    {
+      emulationActivity.runOnUiThread(emulationActivity::initInputPointer);
+    }
+  }
+
+  public static native float GetGameAspectRatio();
 }

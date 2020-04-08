@@ -7,7 +7,6 @@
 #include <QApplication>
 #include <QDir>
 #include <QFile>
-#include <QSettings>
 #include <QSize>
 
 #include "AudioCommon/AudioCommon.h"
@@ -19,6 +18,7 @@
 #include "Core/Config/MainSettings.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
+#include "Core/IOS/IOS.h"
 #include "Core/NetPlayClient.h"
 #include "Core/NetPlayServer.h"
 
@@ -27,6 +27,10 @@
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/InputConfig.h"
+
+#include "VideoCommon/NetPlayChatUI.h"
+#include "VideoCommon/NetPlayGolfUI.h"
+#include "VideoCommon/RenderBase.h"
 
 Settings::Settings()
 {
@@ -137,6 +141,11 @@ void Settings::RefreshGameList()
   emit GameListRefreshRequested();
 }
 
+void Settings::NotifyRefreshGameListComplete()
+{
+  emit GameListRefreshCompleted();
+}
+
 void Settings::RefreshMetadata()
 {
   emit MetadataRefreshRequested();
@@ -217,13 +226,13 @@ void Settings::SetKeepWindowOnTop(bool top)
   if (IsKeepWindowOnTopEnabled() == top)
     return;
 
-  SConfig::GetInstance().bKeepWindowOnTop = top;
+  Config::SetBaseOrCurrent(Config::MAIN_KEEP_WINDOW_ON_TOP, top);
   emit KeepWindowOnTopChanged(top);
 }
 
 bool Settings::IsKeepWindowOnTopEnabled() const
 {
-  return SConfig::GetInstance().bKeepWindowOnTop;
+  return Config::Get(Config::MAIN_KEEP_WINDOW_ON_TOP);
 }
 
 int Settings::GetVolume() const
@@ -294,6 +303,9 @@ std::shared_ptr<NetPlay::NetPlayClient> Settings::GetNetPlayClient()
 void Settings::ResetNetPlayClient(NetPlay::NetPlayClient* client)
 {
   m_client.reset(client);
+
+  g_netplay_chat_ui.reset();
+  g_netplay_golf_ui.reset();
 }
 
 std::shared_ptr<NetPlay::NetPlayServer> Settings::GetNetPlayServer()
@@ -379,16 +391,6 @@ void Settings::SetBreakpointsVisible(bool enabled)
 bool Settings::IsBreakpointsVisible() const
 {
   return GetQSettings().value(QStringLiteral("debugger/showbreakpoints")).toBool();
-}
-
-bool Settings::IsControllerStateNeeded() const
-{
-  return m_controller_state_needed;
-}
-
-void Settings::SetControllerStateNeeded(bool needed)
-{
-  m_controller_state_needed = needed;
 }
 
 void Settings::SetCodeVisible(bool enabled)
@@ -526,6 +528,24 @@ bool Settings::IsBatchModeEnabled() const
 void Settings::SetBatchModeEnabled(bool batch)
 {
   m_batch = batch;
+}
+
+bool Settings::IsSDCardInserted() const
+{
+  return SConfig::GetInstance().m_WiiSDCard;
+}
+
+void Settings::SetSDCardInserted(bool inserted)
+{
+  if (IsSDCardInserted() != inserted)
+  {
+    SConfig::GetInstance().m_WiiSDCard = inserted;
+    emit SDCardInsertionChanged(inserted);
+
+    auto* ios = IOS::HLE::GetIOS();
+    if (ios)
+      ios->SDIO_EventNotify();
+  }
 }
 
 bool Settings::IsUSBKeyboardConnected() const

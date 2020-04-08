@@ -10,8 +10,6 @@
 #include "Core/PowerPC/PPCAnalyst.h"
 #include "Core/PowerPC/PowerPC.h"
 
-JitBase* g_jit;
-
 const u8* JitBase::Dispatch(JitBase& jit)
 {
   return jit.GetBlockCache()->Dispatch();
@@ -47,6 +45,6 @@ bool JitBase::CanMergeNextInstructions(int count) const
 void JitBase::UpdateMemoryOptions()
 {
   bool any_watchpoints = PowerPC::memchecks.HasAny();
-  jo.fastmem = SConfig::GetInstance().bFastmem && (MSR.DR || !any_watchpoints);
+  jo.fastmem = SConfig::GetInstance().bFastmem && jo.fastmem_arena && (MSR.DR || !any_watchpoints);
   jo.memcheck = SConfig::GetInstance().bMMU || any_watchpoints;
 }

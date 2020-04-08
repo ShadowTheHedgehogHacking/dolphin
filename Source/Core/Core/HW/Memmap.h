@@ -62,6 +62,8 @@ extern std::unique_ptr<MMIO::Mapping> mmio_mapping;
 bool IsInitialized();
 void Init();
 void Shutdown();
+bool InitFastmemArena();
+void ShutdownFastmemArena();
 void DoState(PointerWrap& p);
 
 void UpdateLogicalMemory(const PowerPC::BatTable& dbat_table);
@@ -110,4 +112,4 @@ void CopyToEmuSwapped(u32 address, const T* data, size_t size)
   for (size_t i = 0; i < size / sizeof(T); i++)
     dest[i] = Common::FromBigEndian(data[i]);
 }
-}
+}  // namespace Memory
